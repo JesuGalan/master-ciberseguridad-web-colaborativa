@@ -64,29 +64,34 @@ public class User {
         this.mark = mark;
     }
 
-    public File getFile(){
-        return new File(Constants.User.USERS_FOLDER + "/" + username);
+    public File getFile() throws IOException {
+        String absolutePath = new File(Constants.User.USERS_FOLDER + "/").getAbsolutePath();
+        File file = new File(absolutePath + "/", username);
+        if (file.getCanonicalPath().startsWith(absolutePath)) {
+            return file;
+        }
+        Logger.error("Error to access wrong path");
+        throw new IOException("Error in users directory");
     }
 
-    public void save(){
+    public void save() {
         JsonObject json = new JsonObject();
         json.addProperty(Constants.User.FIELD_USERNAME, username);
         json.addProperty(Constants.User.FIELD_PASSWORD, password);
         json.addProperty(Constants.User.FIELD_TYPE, type);
         json.addProperty(Constants.User.FIELD_MARK, mark);
-
-        File file = getFile();
-        if (file.exists()){
-            file.delete();
-        }
-
         try {
+            File file = getFile();
+            if (file.exists()) {
+                file.delete();
+            }
             file.createNewFile();
             FileOutputStream out = new FileOutputStream(file);
             out.write(json.toString().getBytes());
         } catch (IOException e) {
             Logger.error("Error saving user: " + username);
             Logger.error(e.getMessage());
+            throw new RuntimeException("Error to access wrong pat");
         }
     }
 
